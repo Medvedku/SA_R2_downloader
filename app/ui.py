@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("R2 Parquet Downloader --Rubint Technologies")
+        self.setWindowTitle("PRJ-16 --Rubint Technologies")
         
         # Calculate height as 90% of available screen height
         screen_geo = self.screen().availableGeometry()
@@ -56,10 +56,11 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(12, 6, 12, 6)
 
-        title = QLabel("R2 Parquet Downloader")
+        title = QLabel("Parquet Downloader for Structural Health Monitoring of Steel Arena")
         title.setObjectName("appTitle")
         title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF; background: transparent;")
-        header_layout.addWidget(title, alignment=Qt.AlignVCenter | Qt.AlignLeft)
+        # header_layout.addWidget(title, alignment=Qt.AlignVCenter | Qt.AlignLeft)
+        header_layout.addWidget(title, alignment=Qt.AlignVCenter | Qt.AlignCenter)
 
         # Apply retro stripe gradient as background to the header so it's clearly visible
         header.setStyleSheet(f"background: {theme.STRIPE_GRADIENT};")
@@ -77,17 +78,17 @@ class MainWindow(QMainWindow):
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(12)
         
-        def _legend_item(color: str, text: str):
+        def _legend_item(color: str, border_color: str, text: str):
             w = QLabel(text)
             w.setAlignment(Qt.AlignCenter)
             w.setFixedHeight(44)
-            w.setStyleSheet(f"background-color: {color}; border-radius: 0px; color: #ffffff; font-size: 11px; border: 1px solid #531a46;")
+            w.setStyleSheet(f"background-color: {color}; border-radius: 0px; color: #ffffff; font-size: 11px; border: 1px solid {border_color};")
             return w
 
         # Row 0: Legends
-        grid.addWidget(_legend_item("rgba(83, 26, 70, 0.3)", "synced"), 0, 0)
-        grid.addWidget(_legend_item("rgba(216, 43, 44, 0.3)", "available in bucket"), 0, 1)
-        grid.addWidget(_legend_item("rgba(128, 128, 128, 0.1)", "no data"), 0, 2)
+        grid.addWidget(_legend_item("rgba(83, 26, 70, 0.3)", "#531a46", "synced"), 0, 0)
+        grid.addWidget(_legend_item("rgba(216, 43, 44, 0.3)", "#d82b2c", "available in bucket"), 0, 1)
+        grid.addWidget(_legend_item("rgba(128, 128, 128, 0.1)", "#808080", "no data"), 0, 2)
 
         # Row 1: Action Buttons
         self._refresh_btn = QPushButton("Refresh")
