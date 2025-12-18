@@ -41,5 +41,9 @@ This isn't your typical enterprise tool. Inspired by vintage UI and classic vide
 - **Local Storage**: Your credentials are saved locally on your machine (encrypted via Windows standards).
 - **Read-Only Recommended**: For maximum security, use an R2 token with "Read" permissions only.
 
+## Download
+Download the latest Windows EXE here:
+https://github.com/Medvedku/SA_R2_downloader/releases/latest
+
 ---
 *Created with ❤️ for retro lovers and data engineers.*
