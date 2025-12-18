@@ -5,7 +5,8 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QMessageBox,
-    QHBoxLayout
+    QHBoxLayout,
+    QGridLayout
 )
 from PySide6.QtCore import Signal, QTimer, Qt
 from datetime import datetime
@@ -71,42 +72,41 @@ class MainWindow(QMainWindow):
         self._calendar = calendar
         layout.addWidget(calendar)
 
-        # --- Legend ---
-        legend = QWidget()
-        legend_layout = QHBoxLayout()
-        legend_layout.setSpacing(8)
-        legend.setLayout(legend_layout)
+        # --- Grid Layout for Controls (3 columns) ---
+        grid = QGridLayout()
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(12)
+        
         def _legend_item(color: str, text: str):
             w = QLabel(text)
-            w.setStyleSheet(f"background-color: {color}; padding:4px 8px; border-radius:0px; color: #ffffff; font-size:11px; border: 1px solid #531a46;")
+            w.setAlignment(Qt.AlignCenter)
+            w.setFixedHeight(44)
+            w.setStyleSheet(f"background-color: {color}; border-radius: 0px; color: #ffffff; font-size: 11px; border: 1px solid #531a46;")
             return w
 
-        legend_layout.addWidget(_legend_item("rgba(83, 26, 70, 0.8)", "synced"))
-        legend_layout.addWidget(_legend_item("rgba(216, 43, 44, 0.8)", "available in bucket"))
-        legend_layout.addWidget(_legend_item("rgba(128, 128, 128, 0.2)", "no data"))
-        layout.addWidget(legend)
+        # Row 0: Legends
+        grid.addWidget(_legend_item("rgba(83, 26, 70, 0.3)", "synced"), 0, 0)
+        grid.addWidget(_legend_item("rgba(216, 43, 44, 0.3)", "available in bucket"), 0, 1)
+        grid.addWidget(_legend_item("rgba(128, 128, 128, 0.1)", "no data"), 0, 2)
 
-        # --- Action buttons ---
+        # Row 1: Action Buttons
         self._refresh_btn = QPushButton("Refresh")
         self._refresh_btn.clicked.connect(self._start_refresh)
-        layout.addWidget(self._refresh_btn)
+        grid.addWidget(self._refresh_btn, 1, 0)
 
         self._download_btn = QPushButton("Download new files")
         self._download_btn.setEnabled(False)
         self._download_btn.clicked.connect(self._on_download)
-        layout.addWidget(self._download_btn)
+        grid.addWidget(self._download_btn, 1, 1)
 
-        # Settings Layout
-        settings_layout = QHBoxLayout()
-        
         self._settings_btn = QPushButton("Settings…")
         self._settings_btn.setToolTip("Change R2 credentials, bucket and local folder")
         self._settings_btn.clicked.connect(self._open_settings)
-        settings_layout.addWidget(self._settings_btn)
+        grid.addWidget(self._settings_btn, 1, 2)
         
-        layout.addLayout(settings_layout)
+        layout.addLayout(grid)
 
-        # Apply stylesheet
+        # Apply initial stylesheet
         self.setStyleSheet(theme.get_stylesheet())
 
         # connect signal

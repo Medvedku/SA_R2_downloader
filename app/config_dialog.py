@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 
 from app.config import save_config, load_config
 from app.sync import test_connection
+from app import theme
 
 
 class ConfigDialog(QDialog):
@@ -19,6 +20,7 @@ class ConfigDialog(QDialog):
 
         self.setWindowTitle("R2 Configuration")
         self.setMinimumWidth(450)
+        self.setStyleSheet(theme.get_stylesheet())
 
         layout = QVBoxLayout()
         form = QFormLayout()
@@ -54,7 +56,7 @@ class ConfigDialog(QDialog):
 
         layout.addLayout(form)
 
-        self.save_btn = QPushButton("Save & Test")
+        self.save_btn = QPushButton("Save")
         self.save_btn.clicked.connect(self.save_and_test)
 
         layout.addWidget(self.save_btn)

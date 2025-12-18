@@ -39,15 +39,16 @@ def get_stylesheet():
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {VHS_RED}, stop:1 {VHS_ORANGE});
             color: #FFFFFF;
             border: 2px solid {VHS_PURPLE};
-            border-bottom: 4px solid {VHS_PURPLE};
-            border-right: 4px solid {VHS_PURPLE};
+            border-bottom: 2px solid {VHS_PURPLE};
+            border-right: 2px solid {VHS_PURPLE};
             border-radius: 0px;
-            padding: 10px 20px;
+            height: 44px;
+            padding: 0px 20px;
             font-weight: bold;
             font-size: 14px;
             letter-spacing: 1px;
-            margin-bottom: 4px;
-            margin-right: 4px;
+            margin-bottom: 2px;
+            margin-right: 2px;
         }}
         
         QPushButton:hover {{
@@ -56,12 +57,12 @@ def get_stylesheet():
         
         QPushButton:pressed {{
             background: {VHS_PURPLE};
-            border-bottom: 2px solid {VHS_PURPLE};
-            border-right: 2px solid {VHS_PURPLE};
-            margin-top: 2px;
-            margin-left: 2px;
-            margin-bottom: 2px;
-            margin-right: 2px;
+            border-bottom: 1px solid {VHS_PURPLE};
+            border-right: 1px solid {VHS_PURPLE};
+            margin-top: 1px;
+            margin-left: 1px;
+            margin-bottom: 1px;
+            margin-right: 1px;
         }}
         
         QPushButton:disabled {{
@@ -93,6 +94,7 @@ def get_stylesheet():
             padding: 0;
         }}
 
+        /* Year Display */
         QLabel#yearLabel {{
             font-size: 28px;
             font-weight: bold;
@@ -107,6 +109,20 @@ def get_stylesheet():
 
         QFrame#dayCell {{
             border-radius: 2px;
+        }}
+        
+        QLineEdit {{
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid {VHS_PURPLE};
+            color: {text};
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 0px;
+        }}
+        
+        QLineEdit:focus {{
+            border: 1px solid {VHS_YELLOW};
+            background-color: rgba(255, 255, 255, 0.1);
         }}
         
         /* Legend Styles */

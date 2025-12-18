@@ -194,7 +194,6 @@ class YearCalendarWidget(QWidget):
         self._year_label = QLabel(str(self.year))
         self._year_label.setObjectName("yearLabel")
         self._year_label.setAlignment(Qt.AlignCenter)
-        self._year_label.setStyleSheet("font-weight: bold; color: rgba(255,255,255,0.95);")
 
         header.addWidget(self._prev_btn)
         header.addStretch()
