@@ -32,13 +32,13 @@ class DayCell(QFrame):
         # Color mapping (subtle translucent backgrounds)
         if ws.get("bucket") and ws.get("local"):
             # synced (green)
-            bg = "rgba(72,187,120,0.18)"
-            border = "rgba(72,187,120,0.25)"
+            bg = "rgba(83,26,70,0.18)"
+            border = "rgba(83,26,70,0.25)"
             text = "rgba(255,255,255,0.95)"
         elif ws.get("bucket") and not ws.get("local"):
             # available in bucket (blue)
-            bg = "rgba(100,149,237,0.16)"
-            border = "rgba(100,149,237,0.22)"
+            bg = "rgba(216,43,44,0.16)"
+            border = "rgba(216,43,44,0.22)"
             text = "rgba(255,255,255,0.95)"
         elif ws.get("local") and not ws.get("bucket"):
             # local-only (yellow)
@@ -56,7 +56,8 @@ class DayCell(QFrame):
                 border = "rgba(255,255,255,0.05)"
                 text = "rgba(255,255,255,0.92)"
 
-        self.setStyleSheet(f"""
+        # Base style
+        base_style = f"""
             QFrame {{
                 background-color: {bg};
                 color: {text};
@@ -64,7 +65,29 @@ class DayCell(QFrame):
                 border-radius: 4px;
             }}
             QFrame QLabel {{ color: {text}; }}
-        """)
+        """
+
+        # Highlight current day
+        from datetime import date as _date
+        today = _date.today()
+        if day == today:
+            # use a single, clear outer accent border for today (user retro color #eea83a)
+            # remove any inner borders by ensuring only the outer border is drawn
+            # make the cell background transparent so only the outer border is visible
+            today_border = "3px solid #eea83a"
+            today_style = f"""
+                QFrame {{
+                    background-color: transparent;
+                    color: {text};
+                    border: {today_border};
+                    border-radius: 4px;
+                    padding: 0px;
+                }}
+                QFrame QLabel {{ color: {text}; font-weight: bold; background: transparent; padding: 0px; margin: 0px; border: none; }}
+            """
+            self.setStyleSheet(today_style)
+        else:
+            self.setStyleSheet(base_style)
 
 
 class WeekCell(QFrame):
@@ -86,13 +109,12 @@ class WeekCell(QFrame):
 
         self.setLayout(layout)
 
-        # default minimal style
+        # default minimal style for week label
         self.setStyleSheet("""
             QFrame {
                 background-color: transparent;
                 border: 1px solid rgba(255,255,255,0.04);
                 border-radius: 4px;
-                color: rgba(255,255,255,0.75);
             }
             QFrame QLabel { color: rgba(255,255,255,0.75); font-size: 11px; }
         """)
@@ -218,6 +240,26 @@ class YearCalendarWidget(QWidget):
             self.year -= 1
             self._year_label.setText(str(self.year))
             self._build_months()
+
+    def _on_next(self):
+        if self.year < self._max_year:
+            self.year += 1
+            self._year_label.setText(str(self.year))
+            self._build_months()
+
+    def wheelEvent(self, event):
+        """Scroll wheel navigation: scroll down = next year, scroll up = previous year."""
+        delta = event.angleDelta().y()
+        if delta < 0:
+            # wheel scrolled down -> next year
+            self._on_next()
+            event.accept()
+        elif delta > 0:
+            # wheel scrolled up -> previous year
+            self._on_prev()
+            event.accept()
+        else:
+            event.ignore()
 
     def _on_next(self):
         if self.year < self._max_year:

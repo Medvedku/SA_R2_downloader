@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout
 )
 
-from app.config import save_config
+from app.config import save_config, load_config
 from app.sync import test_connection
 
 
@@ -42,6 +42,15 @@ class ConfigDialog(QDialog):
         form.addRow("Secret Key:", self.secret_key)
         form.addRow("Bucket:", self.bucket)
         form.addRow("Local Folder:", path_layout)
+
+        # Prefill with existing config so user can change only the destination folder
+        cfg = load_config()
+        if cfg:
+            self.endpoint.setText(cfg.get("endpoint", ""))
+            self.access_key.setText(cfg.get("access_key", ""))
+            self.secret_key.setText(cfg.get("secret_key", ""))
+            self.bucket.setText(cfg.get("bucket", ""))
+            self.local_path.setText(cfg.get("local_path", ""))
 
         layout.addLayout(form)
 

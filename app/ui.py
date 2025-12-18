@@ -4,9 +4,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QPushButton,
-    QMessageBox
+    QMessageBox,
+    QHBoxLayout
 )
-from PySide6.QtCore import Signal, QTimer
+from PySide6.QtCore import Signal, QTimer, Qt
 from datetime import datetime
 import threading
 
@@ -18,6 +19,8 @@ from app.sync import (
     load_week_status,
     save_week_status,
 )
+from app.config_dialog import ConfigDialog
+from PySide6.QtWidgets import QDialog
 
 
 class MainWindow(QMainWindow):
@@ -27,17 +30,32 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("R2 Parquet Downloader")
+        self.setWindowTitle("R2 Parquet Downloader --Rubint Technologies")
         self.setMinimumSize(1200, 800)
 
         # --- Central widget ---
         central = QWidget()
         layout = QVBoxLayout()
 
-        # --- Header ---
+        # --- Header (visible retro stripes bar) ---
+        header = QWidget()
+        header.setObjectName("appHeader")
+        header.setFixedHeight(56)
+        header_layout = QHBoxLayout(header)
+        header_layout.setContentsMargins(12, 6, 12, 6)
+
         title = QLabel("R2 Parquet Downloader")
-        title.setStyleSheet("font-size: 18px; font-weight: bold;")
-        layout.addWidget(title)
+        title.setObjectName("appTitle")
+        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF; background: transparent;")
+        header_layout.addWidget(title, alignment=Qt.AlignVCenter | Qt.AlignLeft)
+
+        # Apply retro stripe gradient as background to the header so it's clearly visible
+        header.setStyleSheet(
+            "background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
+            " stop:0 #531a46, stop:0.25 #9f1e34, stop:0.5 #d82b2c, stop:0.75 #e4532e, stop:1 #eea83a);"
+        )
+
+        layout.addWidget(header)
 
         # --- Year calendar ---
         year = datetime.now().year
@@ -51,7 +69,16 @@ class MainWindow(QMainWindow):
         self._refresh_btn.clicked.connect(self._start_refresh)
         layout.addWidget(self._refresh_btn)
 
-        layout.addWidget(QPushButton("Download new files"))
+        self._download_btn = QPushButton("Download new files")
+        self._download_btn.setEnabled(False)
+        self._download_btn.clicked.connect(self._on_download)
+        layout.addWidget(self._download_btn)
+
+        # Settings / Config button to change credentials and paths
+        self._settings_btn = QPushButton("Settings…")
+        self._settings_btn.setToolTip("Change R2 credentials, bucket and local folder")
+        self._settings_btn.clicked.connect(self._open_settings)
+        layout.addWidget(self._settings_btn)
 
         # connect signal
         self.week_status_updated.connect(self._on_week_status_updated)
@@ -61,9 +88,31 @@ class MainWindow(QMainWindow):
             ws = load_week_status()
             if ws:
                 self._calendar.set_week_status(ws)
+                # enable download button if anything available
+                self._update_download_button(ws)
         except Exception as exc:
             # non-fatal: show a message
             QMessageBox.warning(self, "Warning", f"Failed to load saved week status: {exc}")
+
+        # Add legend
+        legend = QWidget()
+        legend_layout = QHBoxLayout()
+        legend_layout.setSpacing(8)
+        legend.setLayout(legend_layout)
+        def _legend_item(color: str, text: str):
+            w = QLabel(text)
+            # use white text for better contrast on dark backgrounds
+            w.setStyleSheet(f"background-color: {color}; padding:4px 8px; border-radius:4px; color: #ffffff; font-size:11px;")
+            return w
+
+        legend_layout.addWidget(_legend_item("rgba(83,26,70,0.9)", "synced"))
+        legend_layout.addWidget(_legend_item(
+            "rgba(216,43,44,0.9)", "available in bucket"))
+        # legend_layout.addWidget(_legend_item("rgba(255,168,58,0.95)", "local only"))
+        legend_layout.addWidget(_legend_item("rgba(255,255,255,0.08)", "no data"))
+        layout.addWidget(legend)
+
+        # Year navigation now uses mouse wheel (scroll down = next year, scroll up = previous year)
 
         central.setLayout(layout)
         self.setCentralWidget(central)
@@ -72,12 +121,23 @@ class MainWindow(QMainWindow):
         # disable UI while refreshing and run scan in background
         self._refresh_btn.setEnabled(False)
         self._refresh_btn.setText("Refreshing...")
+        # snapshot the existing week status to detect changes after refresh
+        old_status = dict(self._calendar._week_status)
 
-        def _worker():
+        def _worker(old_status=old_status):
             try:
                 local_weeks = get_local_complete_weeks()
                 bucket_weeks = get_bucket_complete_weeks()
                 status = build_week_status(local_weeks, bucket_weeks)
+                # log whether refresh discovered new available weeks
+                from app.logger import logger
+                old_available = {k for k, v in old_status.items() if v.get("bucket") and not v.get("local")}
+                new_available = {k for k, v in status.items() if v.get("bucket") and not v.get("local")}
+                added = new_available - old_available
+                if added:
+                    logger.info("Refresh: new data found for %d weeks", len(added))
+                else:
+                    logger.info("Refresh: everything up to date")
                 # emit to UI thread
                 self.week_status_updated.emit(status)
             except Exception as exc:
@@ -95,6 +155,10 @@ class MainWindow(QMainWindow):
         try:
             # Update calendar and persist
             self._calendar.set_week_status(status)
+            # update download availability
+            self._update_download_button(status)
+            # reset download button label in case it was showing progress
+            self._download_btn.setText("Download new files")
             try:
                 save_week_status(status)
             except Exception:
@@ -103,3 +167,76 @@ class MainWindow(QMainWindow):
         finally:
             self._refresh_btn.setEnabled(True)
             self._refresh_btn.setText("Refresh")
+
+    def _update_download_button(self, status: dict):
+        # enable if any week has bucket=True and local=False
+        has = any(v.get("bucket") and not v.get("local") for v in status.values())
+        self._download_btn.setEnabled(bool(has))
+
+    def _on_download(self):
+        # Minimal download workflow placeholder: disable button and show message
+        self._download_btn.setEnabled(False)
+        self._download_btn.setText("Downloading...")
+        # disable refresh to avoid concurrent operations
+        self._refresh_btn.setEnabled(False)
+
+        # determine weeks to download
+        current_status = self._calendar._week_status
+        weeks_to_download = {k for k, v in current_status.items() if v.get("bucket") and not v.get("local")}
+
+        def _worker():
+            try:
+                from app.sync import download_weeks
+
+                new_status, failures, downloaded = download_weeks(weeks_to_download)
+                # emit updated status
+                self.week_status_updated.emit(new_status)
+
+                # Inform user with details and show folder location for convenience
+                def _show_result():
+                    msgs = []
+                    if downloaded:
+                        msgs.append(f"Downloaded {len(downloaded)} files.")
+                        # show up to 5 file paths
+                        sample = "\n".join(downloaded[:5])
+                        msgs.append(f"Examples:\n{sample}")
+                        # show folder of first downloaded file
+                        first_folder = downloaded[0]
+                    else:
+                        msgs.append("No new files were downloaded (already present locally or nothing to download).")
+
+                    if failures:
+                        msgs.append(f"\nFailures: {len(failures)} files failed to download.")
+                        # include examples of failures (up to 5) to help diagnose permission issues
+                        sample_fail = "\n".join([f"{k}: {err}" for k, err in failures[:5]])
+                        msgs.append(f"Examples of failures:\n{sample_fail}")
+
+                    QMessageBox.information(self, "Download Result", "\n\n".join(msgs))
+
+                QTimer.singleShot(0, _show_result)
+            except Exception as exc:
+                # show error in main thread
+                QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Download Failed", str(exc)))
+                # still emit refresh to update any partial changes
+                try:
+                    new_status = build_week_status(get_local_complete_weeks(), get_bucket_complete_weeks())
+                    self.week_status_updated.emit(new_status)
+                except Exception:
+                    self.week_status_updated.emit({})
+
+        t = threading.Thread(target=_worker, daemon=True)
+        t.start()
+
+    def _open_settings(self):
+        dlg = ConfigDialog()
+        if dlg.exec() == QDialog.Accepted:
+            # config saved; refresh and re-evaluate download availability
+            try:
+                ws = load_week_status()
+                if ws:
+                    self._calendar.set_week_status(ws)
+                    self._update_download_button(ws)
+            except Exception:
+                pass
+            # run a refresh to pick up new credentials / bucket
+            self._start_refresh()
