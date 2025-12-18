@@ -1,7 +1,7 @@
 import boto3
 
 
-def test_connection(config: dict) -> bool:
+def test_connection(config: dict):
     s3 = boto3.client(
         "s3",
         endpoint_url=config["endpoint"],
@@ -10,4 +10,3 @@ def test_connection(config: dict) -> bool:
     )
 
     s3.list_objects_v2(Bucket=config["bucket"], MaxKeys=1)
-    return True
