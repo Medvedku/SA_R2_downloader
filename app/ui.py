@@ -21,6 +21,8 @@ from app.sync import (
 )
 from app.config_dialog import ConfigDialog
 from PySide6.QtWidgets import QDialog
+from app.config import load_config, save_config
+from app import theme
 
 
 class MainWindow(QMainWindow):
@@ -31,7 +33,16 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("R2 Parquet Downloader --Rubint Technologies")
-        self.setMinimumSize(1200, 800)
+        
+        # Calculate height as 90% of available screen height
+        screen_geo = self.screen().availableGeometry()
+        target_height = int(screen_geo.height() * 0.9)
+        target_width = 1200
+        
+        self.setFixedSize(target_width, target_height)
+
+        # Load config (theme not needed anymore, but keeping for other potential settings)
+        self._config = load_config()
 
         # --- Central widget ---
         central = QWidget()
@@ -50,10 +61,7 @@ class MainWindow(QMainWindow):
         header_layout.addWidget(title, alignment=Qt.AlignVCenter | Qt.AlignLeft)
 
         # Apply retro stripe gradient as background to the header so it's clearly visible
-        header.setStyleSheet(
-            "background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
-            " stop:0 #531a46, stop:0.25 #9f1e34, stop:0.5 #d82b2c, stop:0.75 #e4532e, stop:1 #eea83a);"
-        )
+        header.setStyleSheet(f"background: {theme.STRIPE_GRADIENT};")
 
         layout.addWidget(header)
 
@@ -63,8 +71,22 @@ class MainWindow(QMainWindow):
         self._calendar = calendar
         layout.addWidget(calendar)
 
+        # --- Legend ---
+        legend = QWidget()
+        legend_layout = QHBoxLayout()
+        legend_layout.setSpacing(8)
+        legend.setLayout(legend_layout)
+        def _legend_item(color: str, text: str):
+            w = QLabel(text)
+            w.setStyleSheet(f"background-color: {color}; padding:4px 8px; border-radius:0px; color: #ffffff; font-size:11px; border: 1px solid #531a46;")
+            return w
+
+        legend_layout.addWidget(_legend_item("rgba(83, 26, 70, 0.8)", "synced"))
+        legend_layout.addWidget(_legend_item("rgba(216, 43, 44, 0.8)", "available in bucket"))
+        legend_layout.addWidget(_legend_item("rgba(128, 128, 128, 0.2)", "no data"))
+        layout.addWidget(legend)
+
         # --- Action buttons ---
-        # Action buttons
         self._refresh_btn = QPushButton("Refresh")
         self._refresh_btn.clicked.connect(self._start_refresh)
         layout.addWidget(self._refresh_btn)
@@ -74,11 +96,18 @@ class MainWindow(QMainWindow):
         self._download_btn.clicked.connect(self._on_download)
         layout.addWidget(self._download_btn)
 
-        # Settings / Config button to change credentials and paths
+        # Settings Layout
+        settings_layout = QHBoxLayout()
+        
         self._settings_btn = QPushButton("Settings…")
         self._settings_btn.setToolTip("Change R2 credentials, bucket and local folder")
         self._settings_btn.clicked.connect(self._open_settings)
-        layout.addWidget(self._settings_btn)
+        settings_layout.addWidget(self._settings_btn)
+        
+        layout.addLayout(settings_layout)
+
+        # Apply stylesheet
+        self.setStyleSheet(theme.get_stylesheet())
 
         # connect signal
         self.week_status_updated.connect(self._on_week_status_updated)
@@ -93,24 +122,6 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             # non-fatal: show a message
             QMessageBox.warning(self, "Warning", f"Failed to load saved week status: {exc}")
-
-        # Add legend
-        legend = QWidget()
-        legend_layout = QHBoxLayout()
-        legend_layout.setSpacing(8)
-        legend.setLayout(legend_layout)
-        def _legend_item(color: str, text: str):
-            w = QLabel(text)
-            # use white text for better contrast on dark backgrounds
-            w.setStyleSheet(f"background-color: {color}; padding:4px 8px; border-radius:4px; color: #ffffff; font-size:11px;")
-            return w
-
-        legend_layout.addWidget(_legend_item("rgba(83,26,70,0.9)", "synced"))
-        legend_layout.addWidget(_legend_item(
-            "rgba(216,43,44,0.9)", "available in bucket"))
-        # legend_layout.addWidget(_legend_item("rgba(255,168,58,0.95)", "local only"))
-        legend_layout.addWidget(_legend_item("rgba(255,255,255,0.08)", "no data"))
-        layout.addWidget(legend)
 
         # Year navigation now uses mouse wheel (scroll down = next year, scroll up = previous year)
 

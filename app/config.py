@@ -16,11 +16,15 @@ def get_config_path() -> Path:
     return get_appdata_dir() / "config.json"
 
 
-def load_config() -> dict | None:
+def load_config() -> dict:
     path = get_config_path()
     if not path.exists():
-        return None
-    return json.loads(path.read_text(encoding="utf-8"))
+        return {}
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+        return config
+    except Exception:
+        return {}
 
 
 def save_config(config: dict):

@@ -11,10 +11,11 @@ class DayCell(QFrame):
     def __init__(self, day: date, current_month: int, week_status: dict | None = None):
         super().__init__()
 
+        self.setObjectName("dayCell")
         self.day = day
         self.iso_year, self.iso_week, _ = day.isocalendar()
 
-        self.setFixedSize(36, 28)
+        self.setFixedSize(36, 24)
 
         label = QLabel(str(day.day))
         label.setAlignment(Qt.AlignTop | Qt.AlignRight)
@@ -24,66 +25,62 @@ class DayCell(QFrame):
         layout.addWidget(label)
         self.setLayout(layout)
 
-        # Minimal, semi-transparent dark style for better contrast in dark theme
-        # Determine week status and color accordingly
+        # Initial style will be set by update_style which is called by the parent
+        self._week_status = week_status or {}
+        self._current_month = current_month
+        self.update_style()
+
+    def update_style(self):
         week_key = (self.iso_year, self.iso_week)
-        ws = (week_status or {}).get(week_key, {"local": False, "bucket": False})
+        ws = self._week_status.get(week_key, {"local": False, "bucket": False})
+        
+        # Color palette
+        purple = "#531a46"
+        yellow = "#eea83a"
+        crimson = "#d82b2c"
 
-        # Color mapping (subtle translucent backgrounds)
+        # Determine colors based on status
         if ws.get("bucket") and ws.get("local"):
-            # synced (green)
-            bg = "rgba(83,26,70,0.18)"
-            border = "rgba(83,26,70,0.25)"
-            text = "rgba(255,255,255,0.95)"
+            # synced
+            bg = "rgba(83, 26, 70, 0.3)"
+            border = purple
+            text = "#FFFFFF"
         elif ws.get("bucket") and not ws.get("local"):
-            # available in bucket (blue)
-            bg = "rgba(216,43,44,0.16)"
-            border = "rgba(216,43,44,0.22)"
-            text = "rgba(255,255,255,0.95)"
-        elif ws.get("local") and not ws.get("bucket"):
-            # local-only (yellow)
-            bg = "rgba(255,193,7,0.12)"
-            border = "rgba(255,193,7,0.18)"
-            text = "rgba(0,0,0,0.85)"
+            # available in bucket
+            bg = "rgba(216, 43, 44, 0.3)"
+            border = crimson
+            text = "#FFFFFF"
         else:
-            # default minimal
-            if day.month != current_month:
-                bg = "rgba(255,255,255,0.02)"
-                border = "rgba(255,255,255,0.03)"
-                text = "rgba(255,255,255,0.45)"
+            # default
+            if self.day.month != self._current_month:
+                bg = "rgba(128, 128, 128, 0.05)"
+                border = "rgba(128, 128, 128, 0.1)"
+                text = "rgba(128, 128, 128, 0.5)"
             else:
-                bg = "rgba(255,255,255,0.03)"
-                border = "rgba(255,255,255,0.05)"
-                text = "rgba(255,255,255,0.92)"
+                bg = "rgba(128, 128, 128, 0.1)"
+                border = "rgba(128, 128, 128, 0.2)"
+                text = "#FFFFFF"
 
-        # Base style
         base_style = f"""
-            QFrame {{
+            QFrame#dayCell {{
                 background-color: {bg};
                 color: {text};
                 border: 1px solid {border};
-                border-radius: 4px;
+                border-radius: 2px;
             }}
-            QFrame QLabel {{ color: {text}; }}
+            QFrame#dayCell QLabel {{ color: {text}; background: transparent; border: none; }}
         """
 
-        # Highlight current day
         from datetime import date as _date
-        today = _date.today()
-        if day == today:
-            # use a single, clear outer accent border for today (user retro color #eea83a)
-            # remove any inner borders by ensuring only the outer border is drawn
-            # make the cell background transparent so only the outer border is visible
-            today_border = "3px solid #eea83a"
+        if self.day == _date.today():
             today_style = f"""
-                QFrame {{
+                QFrame#dayCell {{
                     background-color: transparent;
                     color: {text};
-                    border: {today_border};
-                    border-radius: 4px;
-                    padding: 0px;
+                    border: 2px solid {yellow};
+                    border-radius: 2px;
                 }}
-                QFrame QLabel {{ color: {text}; font-weight: bold; background: transparent; padding: 0px; margin: 0px; border: none; }}
+                QFrame#dayCell QLabel {{ color: {text}; font-weight: bold; background: transparent; border: none; }}
             """
             self.setStyleSheet(today_style)
         else:
@@ -158,6 +155,9 @@ class MonthWidget(QWidget):
         layout.addWidget(title)
         layout.addLayout(grid)
         self.setLayout(layout)
+        
+        self.title_label = title
+        self.grid = grid
 
 
 class YearCalendarWidget(QWidget):
@@ -179,17 +179,20 @@ class YearCalendarWidget(QWidget):
         header = QHBoxLayout()
         header.setSpacing(6)
 
-        self._prev_btn = QPushButton("<")
-        self._prev_btn.setFixedSize(26, 24)
-        self._prev_btn.setToolTip("Previous year")
+        self._prev_btn = QPushButton("←")
+        self._prev_btn.setObjectName("yearNavBtn")
+        self._prev_btn.setFixedSize(30, 30)
+        self._prev_btn.setToolTip("Previous year (Left Arrow)")
         self._prev_btn.clicked.connect(self._on_prev)
 
-        self._next_btn = QPushButton(">")
-        self._next_btn.setFixedSize(26, 24)
-        self._next_btn.setToolTip("Next year")
+        self._next_btn = QPushButton("→")
+        self._next_btn.setObjectName("yearNavBtn")
+        self._next_btn.setFixedSize(30, 30)
+        self._next_btn.setToolTip("Next year (Right Arrow)")
         self._next_btn.clicked.connect(self._on_next)
 
         self._year_label = QLabel(str(self.year))
+        self._year_label.setObjectName("yearLabel")
         self._year_label.setAlignment(Qt.AlignCenter)
         self._year_label.setStyleSheet("font-weight: bold; color: rgba(255,255,255,0.95);")
 
@@ -200,6 +203,9 @@ class YearCalendarWidget(QWidget):
         header.addWidget(self._next_btn)
 
         self._main_layout.addLayout(header)
+        
+        # Ensure focus for key events
+        self.setFocusPolicy(Qt.StrongFocus)
 
         self._grid = QGridLayout()
         self._grid.setSpacing(12)
@@ -260,6 +266,17 @@ class YearCalendarWidget(QWidget):
             event.accept()
         else:
             event.ignore()
+
+    def keyPressEvent(self, event):
+        """Arrow key navigation for years."""
+        if event.key() == Qt.Key_Left:
+            self._on_prev()
+            event.accept()
+        elif event.key() == Qt.Key_Right:
+            self._on_next()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
     def _on_next(self):
         if self.year < self._max_year:
