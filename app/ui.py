@@ -5,18 +5,33 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton
 )
+from datetime import datetime
+
+from app.calendar import YearCalendarWidget
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("R2 Parquet Downloader")
-        self.setMinimumSize(500, 300)
 
+        self.setWindowTitle("R2 Parquet Downloader")
+        self.setMinimumSize(1200, 800)
+
+        # --- Central widget ---
         central = QWidget()
         layout = QVBoxLayout()
 
-        layout.addWidget(QLabel("R2 Parquet Downloader"))
+        # --- Header ---
+        title = QLabel("R2 Parquet Downloader")
+        title.setStyleSheet("font-size: 18px; font-weight: bold;")
+        layout.addWidget(title)
+
+        # --- Year calendar ---
+        year = datetime.now().year
+        calendar = YearCalendarWidget(year)
+        layout.addWidget(calendar)
+
+        # --- Action buttons ---
         layout.addWidget(QPushButton("Refresh"))
         layout.addWidget(QPushButton("Download new files"))
 
