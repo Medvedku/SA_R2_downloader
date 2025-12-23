@@ -33,14 +33,19 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("PRJ-16 --Rubint Technologies")
+        self.setWindowTitle("PRJ-16 Mirror")
         
-        # Calculate height as 90% of available screen height
+        # Use a more responsive approach for window size
         screen_geo = self.screen().availableGeometry()
-        target_height = int(screen_geo.height() * 0.9)
-        target_width = 1200
         
-        self.setFixedSize(target_width, target_height)
+        # Default size: 1200x800 or 90% of screen height
+        target_height = int(screen_geo.height() * 0.9)
+        # Avoid making it taller than 900px by default to fit on FullHD
+        target_height = min(target_height, 900)
+        target_width = min(1200, screen_geo.width() - 40)
+        
+        self.resize(target_width, target_height)
+        self.setMinimumSize(800, 600)
 
         # Load config (theme not needed anymore, but keeping for other potential settings)
         self._config = load_config()
@@ -52,11 +57,11 @@ class MainWindow(QMainWindow):
         # --- Header (visible retro stripes bar) ---
         header = QWidget()
         header.setObjectName("appHeader")
-        header.setFixedHeight(56)
+        header.setFixedHeight(80)
         header_layout = QHBoxLayout(header)
         header_layout.setContentsMargins(12, 6, 12, 6)
 
-        title = QLabel("Parquet Downloader for Structural Health Monitoring of Steel Arena")
+        title = QLabel("Parquets Downloader for Structural Health Monitoring of Steel Arena")
         title.setObjectName("appTitle")
         title.setStyleSheet("font-size: 18px; font-weight: bold; color: #FFFFFF; background: transparent;")
         # header_layout.addWidget(title, alignment=Qt.AlignVCenter | Qt.AlignLeft)
@@ -82,7 +87,7 @@ class MainWindow(QMainWindow):
             w = QLabel(text)
             w.setAlignment(Qt.AlignCenter)
             w.setFixedHeight(44)
-            w.setStyleSheet(f"background-color: {color}; border-radius: 0px; color: #ffffff; font-size: 11px; border: 1px solid {border_color};")
+            w.setStyleSheet(f"background-color: {color}; border-radius: 0px; color: #ffffff; font-size: 14px; border: 1px solid {border_color};")
             return w
 
         # Row 0: Legends

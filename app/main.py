@@ -8,11 +8,28 @@ import sys
 from app.ui import MainWindow
 from app.config import load_config
 from app.config_dialog import ConfigDialog
+from app.utils import get_resource_path
 
 
 def main():
     # Force a consistent dark theme regardless of system settings
     app = QApplication(sys.argv)
+
+    # Windows Taskbar Icon Fix: Ensure the icon appears correctly in the taskbar
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            myappid = "medvedku.sa_r2_downloader.v1"
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except Exception:
+            pass
+
+    # Set application icon globally so all windows (including dialogs) inherit it
+    icon_path = get_resource_path("assets/icon.ico")
+    if icon_path.exists():
+        icon = QIcon(str(icon_path))
+        app.setWindowIcon(icon)
+
     # Use Fusion for predictable palette behavior
     app.setStyle(QStyleFactory.create("Fusion"))
 
@@ -67,12 +84,6 @@ def main():
             sys.exit(0)
 
     window = MainWindow()
-    # Set application icon from assets/icon.ico if present
-    icon_path = Path(__file__).resolve().parent.parent / "assets" / "icon.ico"
-    if icon_path.exists():
-        icon = QIcon(str(icon_path))
-        app.setWindowIcon(icon)
-        window.setWindowIcon(icon)
     window.show()
     sys.exit(app.exec())
 

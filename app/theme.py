@@ -42,7 +42,7 @@ def get_stylesheet():
             border-bottom: 2px solid {VHS_PURPLE};
             border-right: 2px solid {VHS_PURPLE};
             border-radius: 0px;
-            height: 44px;
+            min-height: 36px;
             padding: 0px 20px;
             font-weight: bold;
             font-size: 14px;

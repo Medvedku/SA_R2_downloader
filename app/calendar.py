@@ -15,7 +15,7 @@ class DayCell(QFrame):
         self.day = day
         self.iso_year, self.iso_week, _ = day.isocalendar()
 
-        self.setFixedSize(36, 24)
+        self.setMinimumSize(32, 20)
 
         label = QLabel(str(day.day))
         label.setAlignment(Qt.AlignTop | Qt.AlignRight)
@@ -95,7 +95,7 @@ class WeekCell(QFrame):
         self.week = week
 
         self.setFrameShape(QFrame.StyledPanel)
-        self.setFixedSize(38, 26)
+        self.setMinimumSize(32, 20)
 
         label = QLabel(f"W{week:02d}")
         label.setAlignment(Qt.AlignCenter)
