@@ -132,25 +132,43 @@ class MonthWidget(QWidget):
         grid.setSpacing(2)
 
         # Weekday header
+        # Add "Wk" header in first column
+        wk_lbl = QLabel("Wk")
+        wk_lbl.setAlignment(Qt.AlignCenter)
+        wk_lbl.setStyleSheet("font-size: 10px; color: rgba(255,255,255,0.45); font-weight: bold;")
+        grid.addWidget(wk_lbl, 0, 0)
+
         for col, name in enumerate(["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]):
             lbl = QLabel(name)
             lbl.setAlignment(Qt.AlignCenter)
             lbl.setStyleSheet("font-size: 10px; color: rgba(255,255,255,0.65);")
-            grid.addWidget(lbl, 0, col)
+            grid.addWidget(lbl, 0, col + 1)
 
         cal = calendar.Calendar(firstweekday=calendar.MONDAY)
         days = list(cal.itermonthdates(year, month))
 
         row = 1
-        col = 0
+        col = 1  # Start from column 1 to leave column 0 for week numbers
+        
+        # Add first week number
+        if days:
+            _, week_num, _ = days[0].isocalendar()
+            grid.addWidget(WeekCell(year, week_num), row, 0)
+
         for d in days:
             cell = DayCell(d, month, week_status=week_status)
             grid.addWidget(cell, row, col)
 
             col += 1
-            if col == 7:
-                col = 0
+            if col == 8:
+                col = 1
                 row += 1
+                # Add week number for the new row
+                if d != days[-1]:
+                    # Use the next day's week number
+                    next_day = days[days.index(d) + 1]
+                    _, w_num, _ = next_day.isocalendar()
+                    grid.addWidget(WeekCell(year, w_num), row, 0)
 
         layout.addWidget(title)
         layout.addLayout(grid)
